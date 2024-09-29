@@ -3,14 +3,12 @@ VENV = venv
 FLASK_APP = app.py
 
 # Check for npm installation
-check-npm:
-	@if ! command -v npm &> /dev/null; then \
-		echo "npm is not installed. Please install Node.js which includes npm."; \
-		exit 1; \
-	fi
+npm:
+		echo "Please install Node.js which includes npm."; \
+
 
 # Install Python and JavaScript dependencies
-install: check-npm
+install: npm
 	# Create a virtual environment and install Python packages
 	python3 -m venv $(VENV)
 	./$(VENV)/bin/pip install -r requirements.txt
@@ -20,7 +18,7 @@ install: check-npm
 # Run the Flask application
 run:
 	FLASK_APP=$(FLASK_APP) FLASK_ENV=development ./$(VENV)/bin/flask run --port 3000
-
+	
 # Clean up virtual environment
 clean:
 	rm -rf $(VENV)
