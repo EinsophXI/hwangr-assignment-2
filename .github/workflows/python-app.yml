@@ -29,8 +29,7 @@ jobs:
       - name: Run the Python application in background
         run: |
           make run & 
-          cd frontend
-          npm start
+          cd frontend && npm start
           sleep 15 
 
       - name: Verify the server is running
