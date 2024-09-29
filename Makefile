@@ -13,11 +13,11 @@ install: npm
 	python3 -m venv $(VENV)
 	./$(VENV)/bin/pip install -r requirements.txt
 	# Install JavaScript dependencies using npm
-	npm install chart.js react react-dom react-chartjs-2
-
+	npm install chart.js react react-dom react-chartjs-2 
+	npm install react-scripts --save
 # Run the Flask application
 run:
-	FLASK_APP=$(FLASK_APP) FLASK_ENV=development ./$(VENV)/bin/flask run --port 3000
+	FLASK_APP=$(FLASK_APP) FLASK_ENV=development ./$(VENV)/bin/flask run --port 5000
 	
 # Clean up virtual environment
 clean:

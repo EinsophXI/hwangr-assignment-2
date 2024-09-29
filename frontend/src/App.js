@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef} from 'react';
 import { Scatter } from 'react-chartjs-2';
 import { Chart as ChartJS, LinearScale, PointElement, LineElement, Tooltip, Legend } from 'chart.js';
 
@@ -62,101 +62,125 @@ const App = () => {
     setCentroids((prev) => [...prev, { x, y }]);
   };
 
-  const stepThroughKMeans = () => {
-    if (isRunning) {
-      console.log('Algorithm is already running.');
+// Check if there are any changes in cluster assignments
+const hasClusterChanged = (oldAssignments, newAssignments) => {
+  return !oldAssignments.every((assignment, index) => assignment === newAssignments[index]);
+};
+
+const stepThroughKMeans = () => {
+  if (isRunning) {
+    console.log('Algorithm is already running.');
+    return;
+  }
+  
+  setIsRunning(true);
+  console.log('Stepping through KMeans...');
+
+  if (currentStep === 0) {
+    if (initializationMethod === 'Manual' && centroids.length !== numClusters) {
+      alert(`Please select ${numClusters} centroids manually.`);
+      setIsRunning(false);
       return;
     }
-    setIsRunning(true);
-    console.log('Stepping through KMeans...');
-
-    if (currentStep === 0) {
-      // Initialize centroids
-      if (initializationMethod === 'Manual' && centroids.length !== numClusters) {
-        alert(`Please select ${numClusters} centroids manually.`);
-        setIsRunning(false);
-        return;
-      }
-      initializeCentroids();
-      setCurrentStep(1);
-      setIsRunning(false);
-    } else {
-      // Assign clusters and update centroids
-      const newAssignments = assignClusters();
-      setClusterAssignments(newAssignments);
-      updateCentroids(newAssignments);
-      setCurrentStep(prevStep => prevStep + 1);
-      setIsRunning(false);
-    }
-  };
-
-  const convergeToFinal = async () => {
     initializeCentroids();
     setCurrentStep(1);
     setIsRunning(false);
-    if (isRunning) {
-      console.log('Algorithm is already running.');
-      return;
-    }
-    setIsRunning(true);
-    console.log('Converging to final result...');
-    // Local copies of assignments and centroids
-    let localAssignments = clusterAssignments.slice();
-    let localCentroids = centroids.slice();
-    let hasConverged = false;
-    let iteration = 0;
-    const maxIterations = 1000; // Prevent infinite loops
-    while (!hasConverged && iteration < maxIterations) {
-      iteration++;
-      console.log(`Iteration ${iteration}`);
+    return; // Exit after initialization
+  }
 
-      // Assign clusters based on current centroids
-      const newAssignments = dataset.map(point => {
-        let closestCentroidIndex = -1;
-        let minDistance = Infinity;
-        localCentroids.forEach((centroid, index) => {
-          const distance = Math.sqrt((point.x - centroid.x) ** 2 + (point.y - centroid.y) ** 2);
-          if (distance < minDistance) {
-            minDistance = distance;
-            closestCentroidIndex = index;
-          }
-        });
-        return closestCentroidIndex;
+  if (currentStep >= dataset.length) {
+    alert('There are no more steps to perform.');
+    setIsRunning(false);
+    return; // Exit if no more steps
+  }
+
+  // Assign clusters and update centroids
+  const newAssignments = assignClusters();
+
+  // Check for changes in cluster assignments
+  if (!hasClusterChanged(clusterAssignments, newAssignments)) {
+    alert('No changes in cluster assignments. Please reset or modify the dataset.');
+    setIsRunning(false);
+    return;
+  }
+
+  setClusterAssignments(newAssignments);
+  updateCentroids(newAssignments);
+  setCurrentStep(prevStep => prevStep + 1);
+  setIsRunning(false);
+};
+
+const convergeToFinal = async () => {
+  initializeCentroids();
+  setCurrentStep(1);
+  setIsRunning(false);
+  if (isRunning) {
+    console.log('Algorithm is already running.');
+    return;
+  }
+  setIsRunning(true);
+  console.log('Converging to final result...');
+  
+  let localAssignments = clusterAssignments.slice();
+  let localCentroids = centroids.slice();
+  let hasConverged = false;
+  let iteration = 0;
+  const maxIterations = 1000; // Prevent infinite loops
+
+  while (!hasConverged && iteration < maxIterations) {
+    iteration++;
+    console.log(`Iteration ${iteration}`);
+    setCurrentStep(prevStep => prevStep + 1);
+    const newAssignments = dataset.map(point => {
+      let closestCentroidIndex = -1;
+      let minDistance = Infinity;
+      localCentroids.forEach((centroid, index) => {
+        const distance = Math.sqrt((point.x - centroid.x) ** 2 + (point.y - centroid.y) ** 2);
+        if (distance < minDistance) {
+          minDistance = distance;
+          closestCentroidIndex = index;
+        }
+      });
+      return closestCentroidIndex;
+    });
+
+    // Check for convergence
+    const isSame = newAssignments.every((assignment, idx) => assignment === localAssignments[idx]);
+    if (isSame) {
+      hasConverged = true;
+      console.log('Convergence achieved.');
+    } else {
+      // Check for changes in cluster assignments
+      if (!hasClusterChanged(localAssignments, newAssignments)) {
+        alert('No changes in cluster assignments. Please reset or modify the dataset.');
+        break; // Exit loop if no changes
+      }
+      localAssignments = newAssignments;
+      setClusterAssignments(newAssignments);
+
+      const newCentroids = localCentroids.map((centroid, index) => {
+        const pointsInCluster = dataset.filter((_, i) => newAssignments[i] === index);
+        if (pointsInCluster.length === 0) return centroid; // No change if no points are assigned
+        const avgX = pointsInCluster.reduce((sum, point) => sum + point.x, 0) / pointsInCluster.length;
+        const avgY = pointsInCluster.reduce((sum, point) => sum + point.y, 0) / pointsInCluster.length;
+        return { x: avgX, y: avgY };
       });
 
-      // Check for convergence
-      const isSame = newAssignments.every((assignment, idx) => assignment === localAssignments[idx]);
-      if (isSame) {
-        hasConverged = true;
-        console.log('Convergence achieved.');
-      } else {
-        localAssignments = newAssignments;
-        setClusterAssignments(newAssignments);
+      localCentroids = newCentroids;
+      setCentroids(newCentroids);
 
-        // Update centroids based on new assignments
-        const newCentroids = localCentroids.map((centroid, index) => {
-          const pointsInCluster = dataset.filter((_, i) => newAssignments[i] === index);
-          if (pointsInCluster.length === 0) return centroid; // No change if no points are assigned
-          const avgX = pointsInCluster.reduce((sum, point) => sum + point.x, 0) / pointsInCluster.length;
-          const avgY = pointsInCluster.reduce((sum, point) => sum + point.y, 0) / pointsInCluster.length;
-          return { x: avgX, y: avgY };
-        });
-
-        localCentroids = newCentroids;
-        setCentroids(newCentroids);
-
-        // Small delay for visualization
-        await new Promise(resolve => setTimeout(resolve, 1000));
-      }
+      await new Promise(resolve => setTimeout(resolve, 1000));
     }
+  }
 
-    if (!hasConverged) {
-      console.log(`Reached maximum iterations (${maxIterations}) without convergence.`);
-    }
+  if (!hasConverged) {
+    console.log(`Reached maximum iterations (${maxIterations}) without convergence.`);
+  }
 
-    setCurrentStep(iteration);
-    setIsRunning(false);
-  };
+  setCurrentStep(iteration);
+  setIsRunning(false);
+};
+
 
 
   const resetAlgorithm = () => {
