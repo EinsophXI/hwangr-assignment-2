@@ -30,7 +30,7 @@ jobs:
     - name: Run the application
       run: |
         make run &
-        sleep 10  # Give the server time to start
+        sleep 15  # Give the server time to start
 
     - name: Verify the server is running
       run: curl -I http://localhost:3000
