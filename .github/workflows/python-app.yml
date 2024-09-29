@@ -26,17 +26,29 @@ jobs:
         run: |
           make install
 
-      - name: Run the Python application
+      - name: Run the Python application in background
         run: |
-          make run &
-          sleep 5  # Give the server time to start
+          make run &    # Run the backend in the background
+          BACKEND_PID=$!  # Capture the process ID
+          echo "Backend started with PID $BACKEND_PID"
+          sleep 15      # Wait for the server to start
 
       - name: Start the frontend with npm
         run: |
-          cd frontend  # Change to your frontend directory
-          npm install           # Install frontend dependencies
-          npm start &          # Start the frontend in the background
-          sleep 10             # Wait for the frontend to start
+          # Run the frontend in a subshell
+          (
+            cd frontend  # Change to your frontend directory
+            npm install           # Install frontend dependencies
+            npm start             # Start the frontend
+          ) &   # Start in the background
+          FRONTEND_PID=$!  # Capture the process ID
+          echo "Frontend started with PID $FRONTEND_PID"
+          sleep 15         # Wait for the frontend to start
 
       - name: Verify the server is running
         run: curl -I http://localhost:3000
+
+      - name: Clean up
+        run: |
+          kill $BACKEND_PID || true  # Kill the backend process
+          kill $FRONTEND_PID || true  # Kill the frontend process
