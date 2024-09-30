@@ -6,6 +6,7 @@ FLASK_APP = app.py
 install:
 	# Create a virtual environment and install Python packages
 	python3 -m venv $(VENV)
+    source venv/bin/activate
 	# Check if venv/bin/pip exists before using it
 	@if [ -f ./$(VENV)/bin/pip ]; then \
 		./$(VENV)/bin/pip install --upgrade pip; \
