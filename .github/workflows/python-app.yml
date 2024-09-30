@@ -43,4 +43,4 @@ jobs:
           wait
 
       - name: Verify the server is running
-        run: curl -I http://localhost:3000
+        run: curl -I http://localhost:5000  # Make sure to use the correct port for your Flask app
