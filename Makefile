@@ -10,6 +10,7 @@ npm:
 # Install Python and JavaScript dependencies
 install: npm
 	# Create a virtual environment and install Python packages
+	python3 -m pip install -q --upgrade pip
 	python3 -m venv $(VENV)
 	./$(VENV)/bin/pip install -r requirements.txt
 	# Install JavaScript dependencies using npm
