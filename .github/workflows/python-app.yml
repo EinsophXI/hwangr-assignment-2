@@ -20,27 +20,27 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'  # Use the latest stable version of Node.js
+          node-version: '20'
 
       - name: Install Python 3.10
-        uses: actions/setup-python@v4  # This is the latest version for Python
+        uses: actions/setup-python@v4
         with:
           python-version: "3.10"
 
-      - name: Install dependencies
+      - name: Verify Python Installation
+        run: python3 --version
+
+      - name: Create virtual environment and install dependencies
         run: |
+          python3 -m venv venv
+          source venv/bin/activate
           make install
 
       - name: Start server and frontend in the same terminal
         run: |
-          # Start the backend server in the background
-          make run &
-
-          # Navigate to the frontend directory and start it
-          cd frontend && npm start
-
-          # Wait for both processes to finish
-          wait
+          make run &  # Start backend server in the background
+          cd frontend && npm start  # Start frontend
+          wait  # Wait for both processes to finish
 
       - name: Verify the server is running
-        run: curl -I http://localhost:5000  # Ensure to use the correct port for your Flask app
+        run: curl -I http://localhost:5000
