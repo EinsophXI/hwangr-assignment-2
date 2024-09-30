@@ -11,26 +11,36 @@ permissions:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Set up Python 3.10
-      uses: actions/setup-python@v3
-      with:
-        python-version: "3.10"
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'  # You can specify the version of Node.js you need
 
-    - name: Install dependencies
-      run: |
-        make install
+      - name: Install Python 3.10
+        uses: actions/setup-python@v3
+        with:
+          python-version: "3.10"
 
-    - name: Run the application
-      run: |
-        make run &
-        sleep 10  # Give the server time to start
+      - name: Install dependencies
+        run: |
+          make install
 
-    - name: Verify the server is running
-      run: curl -I http://localhost:3000
+      - name: Start server and frontend in the same terminal
+        run: |
+          # Start the backend server in the background
+          make run &
+
+          # Navigate to the frontend directory and start it
+          cd frontend && npm start
+
+          # Wait for both processes to finish
+          wait
+
+      - name: Verify the server is running
+        run: curl -I http://localhost:3000
