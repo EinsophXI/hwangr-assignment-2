@@ -6,15 +6,8 @@ FLASK_APP = app.py
 install:
 	# Create a virtual environment and install Python packages
 	python3 -m venv $(VENV)
-	# Check if venv/bin/pip exists before using it
-	@if [ -f ./$(VENV)/bin/pip ]; then \
-		./$(VENV)/bin/pip install --upgrade pip; \
-		./$(VENV)/bin/pip install -r requirements.txt; \
-	else \
-		echo "Virtual environment pip not found."; \
-		exit 1; \
-	fi
-	# Install JavaScript dependencies using npm
+	pip install --upgrade pip
+	pip install -r requirements.txt
 	npm install chart.js react react-dom react-chartjs-2 
 	npm install react-scripts --save
 
